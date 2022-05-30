@@ -16,14 +16,14 @@ export default function Home() {
     incomes: [
       {
         name: "Income Name",
-        amount: 2550,
-        interval: 2
+        amount: 100,
+        interval: 1
       }
     ],
     expenses: [
       {
         name: "Expsense Name",
-        amount: 1700,
+        amount: 100,
         interval: 1
       }
     ]
@@ -45,7 +45,7 @@ export default function Home() {
           {
             name: "Income Name",
             amount: 100,
-            interval: 2
+            interval: 1
           }
         ]
       })
@@ -57,7 +57,7 @@ export default function Home() {
           {
             name: "Expense Name",
             amount: 100,
-            interval: 2
+            interval: 1
           }
         ]
       })
@@ -252,7 +252,7 @@ export default function Home() {
           <button className="add" onClick={(e) => addItem(e, "expense")}>ADD EXPENSE</button>
         </div>
       </section>
-      <h1>NET: ${(iTotal - eTotal).toFixed(2)}</h1>
+      <div className="total">NET: ${(iTotal - eTotal).toFixed(2)}</div>
     </main>
   )
 }
