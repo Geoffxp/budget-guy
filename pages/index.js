@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import Script from 'next/script';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from '../styles/Home.module.css'
 
 const selectValues = [
@@ -11,6 +11,7 @@ const selectValues = [
 ]
 
 export default function Home() {
+  const alerts = useRef();
   const [loaded, setLoaded] = useState(false)
   const [schema, setSchema] = useState({
     incomes: [
@@ -183,7 +184,48 @@ export default function Home() {
   }, [schema])
   return (
     <main>
+      <div ref={alerts} className="alert">
+
+      </div>
       <h1>BUDGET GUY</h1>
+      <div className="json-input">
+        <button type="button" onClick={() => {
+            console.log(JSON.stringify(schema))
+            navigator.clipboard.writeText(JSON.stringify(schema))
+            alerts.current.innerHTML = `<h3>COPIED TO CLIPBOARD</h3>`;
+            alerts.current.classList.add("alerting");
+            setTimeout(() => {
+              alerts.current.classList.remove("alerting");
+            }, 3000)
+          }}>COPY JSON</button>
+        <form style={{ maxHeight: "20px", overflow: "hidden" }}onSubmit={(e) => {
+          e.preventDefault();
+          let json;
+          try {
+            json = JSON.parse(e.target['jsonIn'].value);
+            if (json && json.expenses && json.incomes && Array.isArray(json.incomes) && Array.isArray(json.expenses)) {
+              setSchema(JSON.parse(e.target['jsonIn'].value))
+            } else {
+              console.log(json)
+              alerts.current.innerHTML = `<h3>INVALID SCHEMA</h3>`;
+              alerts.current.classList.add("alerting");
+              setTimeout(() => {
+                alerts.current.classList.remove("alerting");
+              }, 3000)
+            }
+          } catch(err) {
+            alerts.current.innerHTML = `<h3>INVALID JSON</h3>`;
+            alerts.current.classList.add("alerting");
+            setTimeout(() => {
+              alerts.current.classList.remove("alerting");
+            }, 3000)
+          }
+        }}>
+          <label onClick={(e) => e.target.parentNode.style.maxHeight = e.target.parentNode.scrollHeight + "px"} htmlFor="jsonIn">INPUT JSON?</label>
+          <input type="text" id="jsonIn" name="jsonIn" />
+          <button type="submit">SUBMIT</button>
+        </form>
+      </div>
       <section className="breakdown">
         <div className="income">
           <h2>INCOMES</h2>
