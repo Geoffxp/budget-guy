@@ -1,8 +1,4 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import Script from 'next/script';
 import { useEffect, useRef, useState } from 'react';
-import styles from '../styles/Home.module.css'
 
 const selectValues = [
   {name:"Monthly", multiplier: 1},
@@ -38,129 +34,95 @@ export default function Home() {
   const [iTotal, setITotal] = useState(0);
 
   const addItem = (e, type) => {
-    if (type === "income") {
       setSchema({
         ...schema,
-        incomes: [
-          ...schema.incomes,
+        [type]: [
+          ...schema[type],
           {
-            name: "Income Name",
+            name: "Name",
             amount: 100,
             interval: 1
           }
         ]
       })
-    } else {
-      setSchema({
-        ...schema,
-        expenses: [
-          ...schema.expenses,
-          {
-            name: "Expense Name",
-            amount: 100,
-            interval: 1
-          }
-        ]
-      })
-    }
   }
   const removeItem = (type, index) => {
-    if (type === "income") {
       setSchema({
         ...schema,
-        incomes: schema.incomes.filter((thing, i) => i !== index)
+        [type]: schema[type].filter((thing, i) => i !== index)
       })
-    } else {
-      setSchema({
-        ...schema,
-        expenses: schema.expenses.filter((thing, i) => i !== index)
-      })
-    }
   }
   const handleChange = (e, type, index, isNumber) => {
-    if (type === "income") {
-      const updatedIncomes = schema.incomes.map((inc, i) => {
-        if (index === i) {
-          if (isNumber && !isNaN(e.target.value)) {
-            return {
-              ...schema.incomes[i],
-              [e.target.name]: e.target.value
-            }
-          } else if (isNumber) {
-            return {
-              ...schema.incomes[i]
-            }
-          } else {
-            return {
-              ...schema.incomes[i],
-              [e.target.name]: e.target.value
-            }
+    const updated = schema[type].map((val, i) => {
+      if (index === i) {
+        if (isNumber && !isNaN(e.target.value)) {
+          return {
+            ...schema[type][i],
+            [e.target.name]: e.target.value
+          }
+        } else if (isNumber) {
+          return {
+            ...schema[type][i]
+          }
+        } else {
+          return {
+            ...schema[type][i],
+            [e.target.name]: e.target.value
           }
         }
-        return inc
-      })
-      setSchema({
-        ...schema,
-        incomes: updatedIncomes
-      })
-    } else {
-      const updatedExpenses = schema.expenses.map((exp, i) => {
-        if (index === i) {
-          if (isNumber && !isNaN(e.target.value)) {
-            return {
-              ...schema.expenses[i],
-              [e.target.name]: e.target.value
-            }
-          } else if (isNumber) {
-            return {
-              ...schema.expenses[i]
-            }
-          } else {
-            return {
-              ...schema.expenses[i],
-              [e.target.name]: e.target.value
-            }
-          }
+      }
+      return val
+    })
+    setSchema({
+      ...schema,
+      [type]: updated
+    })
+  }
+  const changeInterval = (e, type, index) => {
+    const updated = schema[type].map((val, i) => {
+      if (i === index) {
+        return {
+          ...schema[type][i],
+          interval: e.target.value
         }
-        return exp
-      })
-      setSchema({
-        ...schema,
-        expenses: updatedExpenses
-      })
-    }
+      }
+      return val
+    })
+    setSchema({
+      ...schema,
+      [type]: updated
+    })
   }
 
-  const changeInterval = (e, type, index) => {
-    if (type === "income") {
-      const updatedIncomes = schema.incomes.map((inc, i) => {
-        if (i === index) {
-          return {
-            ...schema.incomes[i],
-            interval: e.target.value
-          }
-        }
-        return inc
-      })
-      setSchema({
-        ...schema,
-        incomes: updatedIncomes
-      })
-    } else {
-      const updatedExpenses = schema.expenses.map((exp, i) => {
-        if (i === index) {
-          return {
-            ...schema.expenses[i],
-            interval: e.target.value
-          }
-        }
-        return exp
-      })
-      setSchema({
-        ...schema,
-        expenses: updatedExpenses
-      })
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    let json;
+    try {
+      json = JSON.parse(e.target['jsonIn'].value);
+      if (json && json.expenses && json.incomes && Array.isArray(json.incomes) && Array.isArray(json.expenses)) {
+        setSchema(JSON.parse(e.target['jsonIn'].value));
+      } else {
+        sendAlert("INVALID SCHEMA");
+      }
+    } catch(err) {
+      sendAlert("INVALID JSON");
     }
+  }
+  const setHeight = (e) => {
+    const maxHeight = e.target.parentNode.scrollHeight + "px"
+    if (e.target.parentNode.style.maxHeight !== maxHeight) {
+      e.target.parentNode.style.maxHeight = maxHeight
+    } else {
+      e.target.parentNode.style.maxHeight = "20px"
+    }
+  }
+  const sendAlert = (alert) => {
+    navigator.clipboard.writeText(JSON.stringify(schema))
+    alerts.current.innerHTML = `<h3>${alert}</h3>`;
+    alerts.current.classList.add("alerting");
+    setTimeout(() => {
+      alerts.current.classList.remove("alerting");
+    }, 3000)
   }
 
   useEffect(() => {
@@ -184,44 +146,12 @@ export default function Home() {
   }, [schema])
   return (
     <main>
-      <div ref={alerts} className="alert">
-
-      </div>
+      <div ref={alerts} className="alert"></div>
       <h1>BUDGET GUY</h1>
       <div className="json-input">
-        <button type="button" onClick={() => {
-            console.log(JSON.stringify(schema))
-            navigator.clipboard.writeText(JSON.stringify(schema))
-            alerts.current.innerHTML = `<h3>COPIED TO CLIPBOARD</h3>`;
-            alerts.current.classList.add("alerting");
-            setTimeout(() => {
-              alerts.current.classList.remove("alerting");
-            }, 3000)
-          }}>COPY JSON</button>
-        <form style={{ maxHeight: "20px", overflow: "hidden" }}onSubmit={(e) => {
-          e.preventDefault();
-          let json;
-          try {
-            json = JSON.parse(e.target['jsonIn'].value);
-            if (json && json.expenses && json.incomes && Array.isArray(json.incomes) && Array.isArray(json.expenses)) {
-              setSchema(JSON.parse(e.target['jsonIn'].value))
-            } else {
-              console.log(json)
-              alerts.current.innerHTML = `<h3>INVALID SCHEMA</h3>`;
-              alerts.current.classList.add("alerting");
-              setTimeout(() => {
-                alerts.current.classList.remove("alerting");
-              }, 3000)
-            }
-          } catch(err) {
-            alerts.current.innerHTML = `<h3>INVALID JSON</h3>`;
-            alerts.current.classList.add("alerting");
-            setTimeout(() => {
-              alerts.current.classList.remove("alerting");
-            }, 3000)
-          }
-        }}>
-          <label onClick={(e) => e.target.parentNode.style.maxHeight = e.target.parentNode.scrollHeight + "px"} htmlFor="jsonIn">INPUT JSON?</label>
+        <button type="button" onClick={() => sendAlert("COPIED TO CLIPBOARD")}>COPY JSON</button>
+        <form style={{ maxHeight: "20px", overflow: "hidden" }} onSubmit={handleSubmit}>
+          <label onClick={setHeight} htmlFor="jsonIn">INPUT JSON?</label>
           <input type="text" id="jsonIn" name="jsonIn" />
           <button type="submit">SUBMIT</button>
         </form>
@@ -235,7 +165,7 @@ export default function Home() {
                 <input
                   type="text"
                   onClick={({ target }) => target.setSelectionRange(0, target.value.length)}
-                  onChange={(e) => handleChange(e, "income", index)}
+                  onChange={(e) => handleChange(e, "incomes", index)}
                   name="name"
                   value={inc.name}
                 />
@@ -243,22 +173,22 @@ export default function Home() {
                   type="text"
                   pattern="[0-9]+"
                   onClick={({ target }) => target.setSelectionRange(0, target.value.length)}
-                  onChange={(e) => handleChange(e, "income", index, true)}
+                  onChange={(e) => handleChange(e, "incomes", index, true)}
                   name="amount"
                   value={inc.amount}
                 />
-                <select value={inc.interval} onChange={(e) => changeInterval(e, "income", index)}>
+                <select value={inc.interval} onChange={(e) => changeInterval(e, "incomes", index)}>
                   {selectValues.map((v, i) => <option key={v.name} value={v.multiplier}>{v.name}</option>)}
                 </select>
                 <button
                   className="remove"
-                  onClick={() => removeItem("income", index)}
+                  onClick={() => removeItem("incomes", index)}
                 >-</button>
               </li>
             ))}
           </ul>
           <h3>Total: {iTotal.toFixed(2)}</h3>
-          <button className="add" onClick={(e) => addItem(e, "income")}>ADD INCOME</button>
+          <button className="add" onClick={(e) => addItem(e, "incomes")}>ADD INCOME</button>
         </div>
         <div className="expenses">
           <h2>EXPENSES</h2>
@@ -268,7 +198,7 @@ export default function Home() {
                 <input
                   type="text"
                   onClick={({ target }) => target.setSelectionRange(0, target.value.length)}
-                  onChange={(e) => handleChange(e, "expense", index)}
+                  onChange={(e) => handleChange(e, "expenses", index)}
                   name="name"
                   value={exp.name}
                 />
@@ -276,22 +206,22 @@ export default function Home() {
                   type="text"
                   pattern="[0-9]+"
                   onClick={({ target }) => target.setSelectionRange(0, target.value.length)}
-                  onChange={(e) => handleChange(e, "expense", index, true)}
+                  onChange={(e) => handleChange(e, "expenses", index, true)}
                   name="amount"
                   value={exp.amount}
                 />
-                <select value={exp.interval} onChange={(e) => changeInterval(e, "expense", index)}>
+                <select value={exp.interval} onChange={(e) => changeInterval(e, "expenses", index)}>
                   {selectValues.map((v, i) => <option key={v.name} value={v.multiplier}>{v.name}</option>)}
                 </select>
                 <button
                   className="remove"
-                  onClick={() => removeItem("expense", index)}
+                  onClick={() => removeItem("expenses", index)}
                 >-</button>
               </li>
             ))}
           </ul>
           <h3>Total: {eTotal.toFixed(2)}</h3>
-          <button className="add" onClick={(e) => addItem(e, "expense")}>ADD EXPENSE</button>
+          <button className="add" onClick={(e) => addItem(e, "expenses")}>ADD EXPENSE</button>
         </div>
       </section>
       <div className="total">NET: ${(iTotal - eTotal).toFixed(2)}</div>
