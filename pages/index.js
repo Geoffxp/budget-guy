@@ -22,7 +22,7 @@ export default function Home() {
     ],
     expenses: [
       {
-        name: "Expsense Name",
+        name: "Expense Name",
         amount: 100,
         interval: 1
       }
